@@ -1,0 +1,117 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date: 10/12/2018 02:58:10 PM
+-- Design Name: 
+-- Module Name: Pipeout - Behavioral
+-- Project Name: 
+-- Target Devices: 
+-- Tool Versions: 
+-- Description: 
+-- 
+-- Dependencies: 
+-- 
+-- Revision:
+-- Revision 0.01 - File Created
+-- Additional Comments:
+-- 
+----------------------------------------------------------------------------------
+
+library IEEE;
+use IEEE.std_logic_1164.all;
+use IEEE.std_logic_arith.all;
+use IEEE.std_logic_misc.all;
+use IEEE.std_logic_unsigned.all;
+use work.FRONTPANEL.all;
+
+library UNISIM;
+use UNISIM.vcomponents.all;
+
+entity Pipeout is
+    port(
+       hi_in     : in STD_LOGIC_VECTOR(7 downto 0);
+	   hi_out    : out STD_LOGIC_VECTOR(1 downto 0);
+	   hi_inout  : inout STD_LOGIC_VECTOR(15 downto 0);
+	   hi_aa     : inout STD_LOGIC;
+	   hi_muxsel : out STD_LOGIC;
+	   sys_clk_p : in STD_LOGIC;
+	   sys_clk_n : in STD_LOGIC
+	   );
+end Pipeout;
+
+architecture Behavioral of Pipeout is
+signal ok1: STD_LOGIC_VECTOR(30 downto 0);
+signal ok2        : STD_LOGIC_VECTOR(16 downto 0);
+signal ok2s       : STD_LOGIC_VECTOR(17*5-1 downto 0);
+signal fifowrite : STD_LOGIC;
+signal fiforead : STD_LOGIC;
+signal datain : STD_LOGIC_VECTOR(15 downto 0);
+signal dataout : STD_LOGIC_VECTOR(15 downto 0);
+signal reset : STD_LOGIC;
+signal wireout	 : STD_LOGIC_VECTOR(15 downto 0);
+signal fifofull : STD_LOGIC;
+signal fifoem : STD_LOGIC;
+signal ti_clk : STD_LOGIC;
+
+COMPONENT FIFO_16bit
+     PORT (
+          clk : IN STD_LOGIC;
+          rst : IN STD_LOGIC;
+          din : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+          wr_en : IN STD_LOGIC;
+          rd_en : IN STD_LOGIC;
+          dout : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+          full : OUT STD_LOGIC;
+          empty : OUT STD_LOGIC
+     );
+END COMPONENT;
+
+begin
+-- Circuit behavior
+ 
+reset <= wireout(0);
+ 
+--Instantiate FIFO Xilinx Core IP here
+ 
+ 
+--End FIFO instantiation
+ 
+-- FrontPanel endpoint instantiation
+
+fifo: FIFO_16bit
+     PORT MAP (
+          clk => ti_clk,
+          rst => reset,
+          din => datain,
+          wr_en => fifowrite,
+          rd_en => fiforead,
+          dout => dataout,
+          full => fifofull,
+          empty => fifoem
+     );
+wire10 : okWireIn 
+          port map(
+               ok1=>ok1,
+               ep_addr=>x"10",
+               ep_dataout=>wireout
+          );
+      
+     pipe80 : okPipeIn
+          port map(
+               ok1=>ok1,
+               ok2=>ok2s(1*17-1 downto 0*17),
+               ep_addr=>x"80",
+               ep_write=>fifowrite,
+               ep_dataout=>datain
+          );
+      
+     pipeA0 : okPipeOut
+          port map(
+               ok1=>ok1,
+               ok2=>ok2s(2*17-1 downto 1*17),
+               ep_addr=>x"A0",
+               ep_read=>fiforead,
+               ep_datain=>dataout
+          );
+end Behavioral;
